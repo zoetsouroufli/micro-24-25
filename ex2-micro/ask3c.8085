@@ -1,0 +1,168 @@
+START:
+IN 10H			
+
+MVI A,10H		
+LXI D,09C2H		; αρχικά διαλέγουμε 4 θέσεις μνήμης για να αρχικοποιήσουμε τα LSB
+STA 09C2H
+STA 09C3H
+STA 09C4H
+STA 09C5H		; αρχικοποιώ τα LSB με 0 
+LINE_0:
+MVI A,FEH		; έλεγξε γραμμή 1111 1110 
+STA 2800H		; πάρε είσοδο keyboard στον καταχωρητή Α
+LDA 1800H		; διάβασε στήλες
+MVI B,07H
+ANA B 		       ; επειδή οι άλλοι είναι αδιάφοροι όροι περνάμε μάσκα για τα 3 LSB
+		
+MVI C,86H		; κωδικός του πλήκτρου αυτού από παράρτημα
+CPI 06H		; κωδικός για 'INSTR STEP'
+JZ PRINT 
+MVI C,85H
+CPI 05H		; κωδικός για 'FETCH PC'
+JZ PRINT
+
+LINE_1:
+MVI A,FDH		; ελέγχω τη γραμμή 1111 1101 - ONE
+STA 2800H
+LDA 1800H
+MVI B,07H
+ANA B 	
+MVI C,84H		
+CPI 06H		; κωδικός για 'RUN'
+JZ PRINT
+MVI C,80H		
+CPI 05H		; κωδικός για 'FETCH REG'
+JZ PRINT
+MVI C,82H
+CPI 03H		; κωδικός για 'FETCH ADRS'
+JZ PRINT
+
+
+LINE_2:
+MVI A,FBH		; ελέγχω τη γραμμή 1111 1011 - TWO
+STA 2800H
+LDA 1800H
+MVI B,07H
+ANA B 	
+MVI C,00H
+CPI 06H		; κωδικός για  '0' αν πατηθεί
+JZ PRINT
+MVI C,83H
+CPI 05H		; 'κωδικός για STORE/INCR'
+JZ PRINT
+MVI C,81H
+CPI 03H 		; κωδικός για 'DECR'
+JZ PRINT
+
+
+LINE_3:
+MVI A,F7H		; ελέγχω τη γραμμή 1111 0111 - THREE
+STA 2800H
+LDA 1800H
+MVI B,07H
+ANA B
+MVI C,01H
+CPI 06H		; κωδικός για  '1' αν πατηθεί
+JZ PRINT
+MVI C,02H
+CPI 05H		; κωδικός για '2' αν πατηθεί
+JZ PRINT
+MVI C,03H
+CPI 03H		; κωδικός για '3' αν πατηθεί
+JZ PRINT
+
+
+LINE_4:
+MVI A,EFH		; ελέγχω τη γραμμή 1110 1111 - FOUR
+STA 2800H
+LDA 1800H
+MVI B,07H
+ANA B
+MVI C,04H
+CPI 06H		; κωδικός για '4' αν πατηθεί
+JZ PRINT
+MVI C,05H
+CPI 05H		; κωδικός για  '5' αν πατηθεί
+JZ PRINT
+MVI C,06H
+CPI 03H		; κωδικός για 6' αν πατηθεί
+JZ PRINT
+
+
+LINE_5:
+MVI A,DFH		; ελέγχω τη γραμμή 1101 1111 - FIVE
+STA 2800H
+LDA 1800H
+MVI B,07H
+ANA B
+MVI C,07H
+CPI 06H		; κωδικός για '7' αν πατηθεί
+JZ PRINT
+MVI C,08H
+CPI 05H		; κωδικός για '8' αν πατηθεί
+JZ PRINT
+MVI C,09H
+CPI 03H		;  κωδικός για '9' αν πατηθεί
+JZ PRINT
+
+
+LINE_6:
+MVI A,BFH		; ελέγχω τη γραμμή 1011 1111 - SIX
+STA 2800H
+LDA 1800H
+MVI B,07H
+ANA B
+MVI C,0AH
+CPI 06H		; κωδικός για 'A' 
+JZ PRINT
+MVI C,0BH
+CPI 05H		; κωδικός για 'B' 
+JZ PRINT
+MVI C,0CH
+CPI 03H		; κωδικός για 'C' 
+JZ PRINT
+
+
+LINE_7:
+MVI A,7FH		; ελέγχω τη γραμμή 0111 1111 - SEVEN
+STA 2800H
+LDA 1800H
+MVI B,07H
+ANA B
+MVI C,0DH
+CPI 06H		; κωδικός για 'D' 
+JZ PRINT
+MVI C,0EH
+CPI 05H		; κωδικός για 'E' 
+JZ PRINT
+MVI C,0FH
+CPI 03H		; κωδικός για 'F' 
+JZ PRINT
+
+JMP START		; αν δεν πατηθεί κανένα κουμπί από τον χρήστη
+
+
+PRINT:
+MOV A,C		; εδώ ανάλογα με το τι έχει πατηθεί έχουμε αποθηκεύσει τον αντίστοιχο κωδικό
+                     ; του παραρτήματος 
+MVI B,0FH
+ANA B              	; μάσκα κρατάμε 4 LSB
+STA 09C6H		; αποθηκεύουμε στις επόμενες θέσεις μνήμης από αυτές που είχαμε θέσει empty
+
+MOV A,C	
+MVI B,F0H
+ANA B		       ; μάσκα κρατάμε 4 MSB
+MVI B,04H
+
+ROTATE:             
+RLC                  ;μεταφέρουμε τα bit αυτά στα LSB με rotation
+DCR B
+JNZ ROTATE
+ 
+STA 09C7H            ;αποθηκεύουμε και εδώ στη μνήμη 
+
+CALL STDM
+CALL DCD
+JMP START
+
+END

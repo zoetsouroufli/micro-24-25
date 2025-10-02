@@ -1,0 +1,33 @@
+START:
+MVI C,80H 		; maska 1000 0000
+MVI D,00H 		; krataei gia to output
+
+
+LOOP1:
+LDA 2000H
+MOV B,A 	 ; kanoume save ton A
+ORA A     	 ; se periptwsi pou einai 0 to input na mporei na kanei break loop
+JZ OUTPUT
+
+ANA C      	 ; elexoume an to bit einai 1
+JNZ OUTPUT 	 ; an einai 1 vrikes to pio aristero bit p einai 1 ara pas output
+
+; ALLIWS 
+MOV A,C	 ; fernw to mask ston A
+ORA D 		 ;  kanw or mask me D      
+MOV D,A 	 ;  etsi krataw ta bits pou einai mhden aristera tou 1
+MOV A,C 	 ; vazw to mask ston a
+RRC    
+MOV C,A 	; pame to mask ena bit deksia
+JMP LOOP1 
+
+OUTPUT:
+MOV A,D  	; fernoume ston A ton D
+CMA
+STA 3000H
+MVI B,05H
+CALL DELB
+JMP START 	 ; synexhs leitourgeia
+
+
+END

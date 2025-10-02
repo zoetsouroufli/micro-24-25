@@ -1,0 +1,76 @@
+IN 10H
+
+FIRST_OFF:
+LDA 2000H       ;διάβασε το input των dip-switches
+ANI 01H         ;κάνε AND με το 1 και κράτα μόνο το LSB του input
+CPI 00H         ;σύγκρινε αν το LSB είναι 0
+JNZ FIRST_OFF   ;αν είναι ON κάνε την ίδια διαδικασία μέχρι να γίνει OFF
+
+SWITCH_ON:
+LDA 2000H      
+ANI 01H
+CPI 00H
+JZ SWITCH_ON    ;αν είναι OFF περίμενε μέχρι να γίνει ON
+
+SECOND_OFF:
+LDA 2000H
+ANI 01H
+CPI 00H 
+JNZ SECOND_OFF  ;περίμενε μέχρι να γίνει ΟFF
+
+RESTART:
+MVI D,0AH       ;μετρητής counter 10 
+
+OUTPUT:
+CALL DELAY      ;φτιάχνω την DELAY για την καθυστέρηση των 15 second
+CALL CHECK      ;για το αν ξανακάνω την ακολουθία OFF-ON-OFF και χρειαστεί να μηδενίσω τον counter
+MVI B,05H     
+CALL DELB       ;για να είναι ορατά τα φώτα
+MVI A,FFH
+CMA
+STA 3000H       ;να ανάβουν (όλα από την πάνω εντολή) LED
+MVI B,05H
+CALL DELB       ; για να είναι ορατά τα φώτα
+MVI A,00H       ; να σβήνουν
+CMA
+STA 3000H
+JMP OUTPUT
+
+
+DELAY:   
+DCR D           ;μείωνε τον counter 
+MOV A,D
+CPI 00H         ;αν ο μετρητής γίνει μηδέν πήγαινε στο END 
+JZ END
+RET
+
+CHECK:
+LDA 2000H       ;διάβασε το input των dip-switches
+ANI 01H         ;κάνε AND με το 1 και κράτα μόνο το LSB του input
+CPI 00H         ;σύγκρινε αν το LSB είναι 0
+MVI B,10H
+CALL DELB
+JZ CONTINUE     ;αν είναι OFF συνέχισε
+
+RET             ;αλλιώς γύρνα 
+
+CONTINUE:
+LDA 2000H
+ANI 01H
+CPI 01H         ;σύγκρινε αν το LSB είναι 1
+MVI B,10H
+CALL DELB
+JZ NEXT         ;αν είναι ON συνέχισε
+RET
+
+NEXT:
+LDA 2000H
+ANI 01H
+MVI B,10H
+CALL DELB
+CPI 00H 
+JZ RESTART      ;αν είναι OFF κάνε RESTART τον counter
+RET
+
+END:
+END

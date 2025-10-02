@@ -1,0 +1,124 @@
+START:
+IN 10H
+LDA 2000H     ;load input
+MOV C,A       ;κρατάμε το input στον C γιατί θα το χρειαστούμε μετά 
+
+MVI B,01H     
+ANA B         ;παιρνάμε μια μάσκα έτσι ώστε να κρατήσουμε μόνο το πρώτο bit        
+MOV D,A       ;αποθηκεύουμε το πρώτο bit B0 στον καταχωρητή D
+
+MOV A,C       ;φέρνουμε πάλι το input μας
+MVI B,02H     ;μάσκα
+ANA B
+RRC           ;θέλουμε όλα τα αποτελέσματα εδώ το Α0 να τα αποθηκεύσουμε στο LSB 
+
+ORA D         ;λογική πράξη A OR D, δηλαδή Α0 OR Β0 αντίστοιχα
+STA 0A00H     ;το αποτέλεσμα του λογικού OR είναι το X0 και το αποθηκεύουμε σε μία θέση μνήμης για μετά 
+
+MOV A,C       ;φέρνω input
+MVI B,04H     ;μάσκα κράταμε 3ο bit 
+ANA B
+RRC
+RRC           ;το θέλουμε στο LSB
+MOV D,A       ;κρατάμε το B1 σε έναν καταχωρητή 
+
+
+MOV A,C     
+MVI B,08H     ;κρατάμε το 4ο bit
+ANA B         ; A1
+RRC
+RRC
+RRC           ;εδώ έχουμε το αποτέλεσμα του Α1
+
+ORA D         ; A OR D , δηλαδή A1 OR B1
+MOV D,A       ; αποθηκεύουμε το αποτέλεσμα του OR στον καταχωρητή D, θα το ονομάσουμε αυτό X1'
+
+LDA 0A00H     ;φέρνουμε το Χ0 
+
+ANA D         ;λογική πράξη X1' με X0 για να προκύψει το Χ1
+STA 0A01H     ;X1 μνήμη
+
+MOV A,C       
+MVI B,10H
+ANA B
+RRC
+RRC
+RRC
+RRC
+MOV D,A       ;κρατάμε το Β2
+
+MOV A,C
+MVI B,20H 
+ANA B
+RRC
+RRC
+RRC
+RRC
+RRC           ;προκύπτει το Α2
+
+ANA D         ;B2 AND A2
+STA 0A02H     ;αποθηκεύω το X2 που προκύπτει
+
+MOV A,C
+MVI B,40H
+ANA B
+RRC
+RRC
+RRC
+RRC
+RRC
+RRC
+MOV D,A        ;B3
+
+MOV A,C
+MVI B,80H
+ANA B
+RRC
+RRC
+RRC
+RRC
+RRC
+RRC
+RRC             ;A3
+
+ANA D
+MOV D,A         ;A3 AND B3 -> X3'
+
+LDA 0A02H       ;X2
+
+XRA D           ;X2 XOR X3' -> X3
+STA 0A03H       ;X3 στη μνήμη
+
+
+LDA 0A00H       ;μιας και έχουμε αποθηκεύσει τα bit X0 X1 X2 X3 σε θέσεις μνήμης τα φέρνουμε 
+                ;ένα ένα και δημιουργούμε την ακολουθία που θέλουμε να δούμε
+                ;φέρνω X0
+MOV B,A         ;βάζω Χ0 στον Β
+
+LDA 0A01H       ;φέρνω το Χ1
+RLC             ;to X1 περιέχει το αποτέλεσμα στο LSB το πάμε στο δεύτερο bit 	
+ORA B           ;κάνουμε OR ανάμεσα σε αυτά τα δύο
+MOV B,A 
+
+LDA 0A02H       ;φέρνω Χ2 
+RLC     
+RLC
+ORA B           ;Χ0Χ1 ΟR X2_στο_3ο_bit
+MOV B,A          
+
+LDA 0A03H       ;φέρνω Χ3
+RLC
+RLC
+RLC
+ORA B           ;εδώ με αντίστοιχο OR παίρνω το τελικό αποτέλεσμα
+
+
+CMA
+
+STA 3000H
+
+MVI B,10H        
+CALL DELB        ;καθυστέρηση για να δούμε αποτέλεσμα
+
+
+END              ;παράδειγμα input 10010101

@@ -1,0 +1,75 @@
+LXI H,0900H     ; Φόρτωσε τη διεύθυνση 0900H στο HL
+IN 10H          ; Απενεργοποίηση προστασίας μνήμης
+
+MVI A,FFH       ; Φόρτωσε στον A την τιμή 255
+MVI B,00H       ; Μηδένισε τον B
+MVI D,00H
+MVI C,00H
+
+LOOP1:
+MOV M,A         ; Αποθήκευσε τον A στη θέση μνήμης που δείχνει το HL
+PUSH B
+MVI B,08H
+CALL CHECK_BIT
+POP B
+CALL CHECK_NUM
+
+INX H           ; Πήγαινε στην επόμενη θέση μνήμης
+DCR A           ; Μείωσε τον A κατά 1
+CPI 00H         ; Σύγκριση του A με 255
+JZ EXIT         ; Αν είναι ίσα, πήγαινε στο EXIT
+
+JMP LOOP1       ; Επανάλαβε
+
+
+CHECK_BIT:
+RLC 	          ;δε χρειαζεται να κανουμε save τον Α γιατι κανει ολοκληρο κυκλο
+JNC COUNT_ZERO   ; Aν το C=0 το μπιτ ειναι μηδεν αρα παμε στην COUNT_ZERO
+JMP NEXT
+
+COUNT_ZERO:		
+INX D		   ; διπλος καταχωρητής γιατι ο αριθμός ξεπερνάει το 255
+			; αυξάνουμε τον D
+
+NEXT:			
+DCR B		    ; μειώνουμε τον Β
+JNZ CHECK_BIT	    ; αμα ειναι διάφορο του 0, αρα δεν έχει δει και τα 8 μπιτ, ξανα
+
+RET
+
+CHECK_NUM:
+CPI 10H
+JNC YES
+
+NO:
+RET
+
+YES:
+CPI 81H
+JNC NO
+INR C
+RET
+
+
+
+EXIT:
+; ελεγχος αποθηκευσης των αριθμων
+
+LDA 09FEH
+CMA
+STA 3000H
+CALL DELB
+
+;αποθηκευση του αριθμου των μηδενικων. Προκειται για διπλο καταχωρητη
+
+LXI H,0A01H
+MOV M,E ;χαμηλο Byte
+INX H
+MOV M,D ; υψηλο byte 
+
+LXI H,0A40H
+MOV M,C	
+
+HLT
+RST 1
+END
