@@ -1,0 +1,45 @@
+MVI A,01H ; φορτωνουμε το πρωτο λαμπακι
+
+MAIN:
+MVI B,10H ; για την καθυστερηση της DELB
+CALL DELB
+MOV B,A
+LDA 2000H ; φερνουμε ινπουτ
+
+ANI 80H ; Ελεγχουμε MSB
+JZ LEFT ; αν το MSB ειναι 0 (δηλαδη OFF) πας αριστερα
+
+RIGHT:
+CALL CHECK_LSB ; παμε να τσεκαρουμε το LSB
+MOV A,B ; φερνουμε σωστη τιμη
+RRC ; πας δεξια
+CALL OUTPUT ; καλεις την αουτπουτ
+JMP MAIN ; ξανα 
+
+LEFT:
+CALL CHECK_LSB
+MOV A,B 
+CALL OUTPUT
+RLC ; το βαλαμε εδω για να αναψει το πρωτο λαμπακι στην αρχη
+JMP MAIN
+
+CHECK_LSB:
+LDA 2000H
+ANI 01H ; αν LSB 1 παιρνω 1 αρα z=0
+JNZ CONTINUE ; ΟΝ=LSB 1
+PUSH B
+MVI B,10H
+CALL DELB ; για να προλαβει το νεο ινπουτ και να συνεχισει οταν το παω παλι high
+POP B ; για να εχουμε και εδω την ιδια καθυστερηση (οταν ηταν στο MSB αργουσε)
+CALL CHECK_LSB ; ξαναελεγχε μεχρι να αλλαξει
+CONTINUE:
+RET
+
+OUTPUT:
+MOV B,A ; κραταμε κανονικη τιμη
+CMA ; συμπληρωμα
+STA 3000H ; εξοδος 
+MOV A,B ; επαναφορα
+RET
+
+END

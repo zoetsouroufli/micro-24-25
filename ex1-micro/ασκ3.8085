@@ -1,0 +1,75 @@
+MAIN:
+IN 10H
+LDA 2000H ; φορτωνω περιεχομενο
+CPI C8H
+JNC LEFT
+CPI 64H ; συγκριση με 100
+JNC RIGHT
+MVI B,FFH ; B=-1
+
+DECA:
+INR B
+SUI 0AH ; αφαιρω 10
+JNC DECA ; αν θετικο ξανα
+ADI 0AH ; επαναφορα του Α αν αρνητικο
+STA 0900H ; μοναδες
+MOV A,B 
+STA 0901H ; δεκαδες
+CALL OUTPUT
+JMP MAIN
+
+
+OUTPUT:
+LDA 0901H     ; Φόρτωσε τις δεκάδες στον A
+RLC           ; Περιστροφή αριστερά 1 bit
+RLC           ; (x4 φορές) για να πάνε οι δεκάδες στα MSB
+RLC
+RLC
+
+MOV B,A      ; Βάλε το αποτέλεσμα στον B (MSB = δεκάδες)
+
+LDA 0900H     ; Φόρτωσε τις μονάδες στον A
+ANI 0FH       ; Καθάρισε τα 4 MSB, κράτα μόνο τα 4 LSB (0-9)
+
+ORA B         ; Συνδύασε A και B: A = A OR B
+CMA 
+STA 3000H
+
+RET
+
+RIGHT:
+LDA 2000H ; ξανατσεκαρω ινπουτ
+CPI 64H ; αν ειναι μικροτερο του 100 βγες
+JC MAIN
+CPI C8H ; αν ειναι μεγαλυτερο του 200 βγες
+JNC MAIN
+MVI A,0FH ; αναβω LSB
+CMA
+STA 3000H
+MVI B,10H
+CALL DELB ; delay
+MVI A,00H ; σβηνω
+CMA
+STA 3000H
+MVI B,10H
+CALL DELB
+JMP RIGHT 
+
+LEFT:
+LDA 2000H ; ξανατσεκαρω ινπουτ
+CPI C8H
+JC MAIN
+MVI A,F0H
+CMA
+STA 3000H
+MVI B,10H
+CALL DELB
+MVI A,00H
+CMA
+STA 3000H
+MVI B,10H
+CALL DELB
+JMP LEFT
+
+END:
+RST 1
